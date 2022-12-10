@@ -1,108 +1,76 @@
-import { useEffect, useRef, useState } from "react";
+import { FocusEventHandler, useRef, useState } from "react";
 
-const ListItem = ({ fruit }: { fruit: string }) => {
-  const target = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    let observer: IntersectionObserver;
-    if (target) {
-      observer = new IntersectionObserver(
-        ([e]) => {
-          const target = e.target as HTMLElement;
-          if (e.isIntersecting) {
-            target.style.opacity = "1";
-          } else {
-            target.style.opacity = "0";
-          }
-        },
-        { threshold: 0.5 }
-      );
-      observer.observe(target.current as Element);
-    }
-  }, [target]);
-  return (
-    <div style={{ marginTop: 800 }}>
-      <div
-        ref={target}
-        style={{
-          height: 500,
-          textAlign: "center",
-          fontSize: "2rem",
-          opacity: 0,
-          transition: "all 0.5s",
-        }}
-      >
-        {fruit}
-      </div>
-    </div>
-  );
-};
-
-const fakeFetch = (delay = 1000) =>
-  new Promise((res) => setTimeout(res, delay));
-
-const fruits = [
-  "apple",
-  "banana",
-  "orange",
-  "lemon",
-  "lime",
-  "pure",
-  "peach",
-  "berry",
-];
-
-const nextItem = [
-  "dorian",
-  "mango",
-  "starfruit",
-  "dragonFruit",
-  "almond",
-  "walnut",
-  "grape",
-  "persimmon",
-];
 export default function Home() {
-  const target = useRef<HTMLDivElement>(null);
-  const [state, setState] = useState<{ item: string[]; isLoading: boolean }>({
-    item: [...fruits],
-    isLoading: false,
-  });
-  const fetchItems = async (nextItem: string[]) => {
-    setState((prev) => ({
-      ...prev,
-      isLoading: true,
-    }));
-    await fakeFetch();
-    setState((prev) => ({
-      item: [...prev.item, ...nextItem],
-      isLoading: true,
-    }));
+  const fruits = [
+    "apple",
+    "banana",
+    "orange",
+    "lemon",
+    "lime",
+    "pure",
+    "peach",
+    "berry",
+    "dorian",
+    "mango",
+    "starfruit",
+    "dragonFruit",
+    "almond",
+    "walnut",
+    "grape",
+    "persimmon",
+  ];
+  const [isHidden, setIsHidden] = useState(true);
+  const [result, setResult] = useState("");
+  const [liOver, setLiOver] = useState(false);
+  const [search, setSearch] = useState("");
+  const ulRef = useRef<HTMLInputElement>(null);
+  const onFocusIn: FocusEventHandler<HTMLInputElement> = (e) => {
+    setIsHidden(false);
   };
-  useEffect(() => {
-    let observer: IntersectionObserver;
-    if (target) {
-      observer = new IntersectionObserver(
-        async ([e], observer) => {
-          if (e.isIntersecting) {
-            observer.unobserve(e.target);
-            await fetchItems(nextItem);
-            observer.observe(e.target);
-          }
-        },
-        { threshold: 0.5 }
-      );
-      observer.observe(target.current as Element);
-    }
-    return () => observer.disconnect();
-  }, [target]);
-
-  const { item, isLoading } = state;
+  const onFocusOut: FocusEventHandler<HTMLInputElement> = (e) => {
+    if (liOver) return;
+    setIsHidden(true);
+  };
   return (
-    <div>
-      {item.map((fruit, i) => {
-        return <ListItem key={i} fruit={fruit} />;
-      })}
-      <div ref={target}>{isLoading && "Loading..."}</div>
-    </div>
+    <>
+      <main className="container">
+        <section>
+          <input
+            ref={ulRef}
+            type={"search"}
+            onFocus={onFocusIn}
+            onBlur={onFocusOut}
+            onChange={(e) => {
+              setSearch(e.currentTarget.value);
+            }}
+          />
+          <ul hidden={isHidden}>
+            {fruits.map((fruit, idx) => (
+              <li
+                key={idx}
+                onMouseOver={(e) => {
+                  setLiOver(true);
+                  e.currentTarget.style.background = "pink";
+                }}
+                onMouseLeave={(e) => {
+                  setLiOver(false);
+                  e.currentTarget.style.background = "none";
+                }}
+                onClick={(e) => {
+                  const value = e.currentTarget.textContent;
+                  setResult(value!);
+                  setIsHidden(true);
+                }}
+                style={{ cursor: "pointer" }}
+                hidden={!fruit.includes(search)}
+              >
+                {fruit}
+              </li>
+            ))}
+          </ul>
+        </section>
+      </main>
+      <footer>{result}</footer>
+    </>
   );
 }
