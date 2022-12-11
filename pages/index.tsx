@@ -1,4 +1,9 @@
-import { FocusEventHandler, useRef, useState } from "react";
+import { useState } from "react";
+import type {
+  MouseEventHandler,
+  ChangeEventHandler,
+  FocusEventHandler,
+} from "react";
 
 export default function Home() {
   const fruits = [
@@ -20,10 +25,14 @@ export default function Home() {
     "persimmon",
   ];
   const [isHidden, setIsHidden] = useState(true);
-  const [result, setResult] = useState("");
   const [liOver, setLiOver] = useState(false);
+  const [result, setResult] = useState("");
   const [search, setSearch] = useState("");
-  const ulRef = useRef<HTMLInputElement>(null);
+
+  const onChange: ChangeEventHandler<HTMLInputElement> = (e) => {
+    const { value } = e.currentTarget;
+    setSearch(value);
+  };
   const onFocusIn: FocusEventHandler<HTMLInputElement> = (e) => {
     setIsHidden(false);
   };
@@ -31,46 +40,51 @@ export default function Home() {
     if (liOver) return;
     setIsHidden(true);
   };
+  const onResetClick = () => {
+    setResult("");
+    setSearch("");
+  };
+
+  const onMouseOver: MouseEventHandler<HTMLLIElement> = (e) => {
+    setLiOver(true);
+    e.currentTarget.style.background = "pink";
+  };
+  const onMouseLeave: MouseEventHandler<HTMLLIElement> = (e) => {
+    setLiOver(false);
+    e.currentTarget.style.background = "none";
+  };
+  const onAddResultClick: MouseEventHandler<HTMLLIElement> = (e) => {
+    const { textContent } = e.currentTarget;
+    setResult(textContent as string);
+    setIsHidden(true);
+  };
   return (
-    <>
-      <main className="container">
-        <section>
-          <input
-            ref={ulRef}
-            type={"search"}
-            onFocus={onFocusIn}
-            onBlur={onFocusOut}
-            onChange={(e) => {
-              setSearch(e.currentTarget.value);
-            }}
-          />
-          <ul hidden={isHidden}>
-            {fruits.map((fruit, idx) => (
-              <li
-                key={idx}
-                onMouseOver={(e) => {
-                  setLiOver(true);
-                  e.currentTarget.style.background = "pink";
-                }}
-                onMouseLeave={(e) => {
-                  setLiOver(false);
-                  e.currentTarget.style.background = "none";
-                }}
-                onClick={(e) => {
-                  const value = e.currentTarget.textContent;
-                  setResult(value!);
-                  setIsHidden(true);
-                }}
-                style={{ cursor: "pointer" }}
-                hidden={!fruit.includes(search)}
-              >
-                {fruit}
-              </li>
-            ))}
-          </ul>
-        </section>
-      </main>
-      <footer>{result}</footer>
-    </>
+    <main className="container">
+      <section>
+        <input
+          type={"search"}
+          onFocus={onFocusIn}
+          onBlur={onFocusOut}
+          onChange={onChange}
+          value={search}
+        />
+        <ul hidden={isHidden}>
+          {fruits.map((fruit, idx) => (
+            <li
+              key={idx}
+              onMouseOver={onMouseOver}
+              onMouseLeave={onMouseLeave}
+              onClick={onAddResultClick}
+              style={{ cursor: "pointer" }}
+              hidden={!fruit.includes(search)}
+            >
+              {fruit}
+            </li>
+          ))}
+        </ul>
+        <button onClick={onResetClick}>reset</button>
+      </section>
+      <div>{result}</div>
+    </main>
   );
 }
